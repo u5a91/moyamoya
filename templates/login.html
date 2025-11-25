@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <h1>ログイン</h1>
+        <form method="post">
+            <input name="username" placeholder="ユーザ名">
+            <input name="password" type="password" placeholder="パスワード">
+            <button type="submit">ログイン</button>
+        </form>
+        <a href="{{ url_for('register') }}">新規登録</a>
+    </body>
+</html>

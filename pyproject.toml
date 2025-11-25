@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "moyamoya"
+version = "0.1.0"
+description = ""
+authors = ["u5491 <fruitmix246@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+flask = "^3.1.2"
+flask-sqlalchemy = "^3.1.1"
+flask-login = "^0.6.3"
+python-dotenv = "^1.2.1"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.11.0"
+isort = "^7.0.0"
+mypy = "^1.18.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
