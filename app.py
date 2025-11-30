@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 from datetime import datetime, timezone
 
-from flask import Flask, render_template, redirect, url_for, request, flash
+from flask import Flask, render_template, redirect, url_for, request, flash, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
     LoginManager, UserMixin, login_user,
@@ -109,6 +109,21 @@ def new_entry():
         db.session.commit()
         return redirect(url_for("index"))
     return render_template("new_entry.html")
+
+# DELETE. form は GET / POST しかサポートしないので POST で代用
+@app.route("/delete/<int:entry_id>", methods=["POST"])
+@login_required
+def delete_entry(entry_id):
+    # None ならば 404
+    entry = Entry.query.get_or_404(entry_id)
+    
+    if entry.user_id != current_user.id:
+        abort(403)
+
+    db.session.delete(entry)
+    db.session.commit()
+    flash("削除が完了しました. ")
+    return redirect(url_for("index"))
 
 if __name__ == "__main__":
     with app.app_context():
