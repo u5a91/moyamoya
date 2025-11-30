@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <h1>{{ year }} 年 {{ month }} 月 カレンダー</h1>
+        <div>
+            <a href ="{{ url_for(
+                    'calendar_view',
+                    year=(year - 1 if month == 1 else year), 
+                    month=(12 if month == 1 else month - 1) 
+                ) }}">
+                前の月
+            </a>
+            <a href ="{{ url_for(
+                    'calendar_view',
+                    year=(year + 1 if month == 12 else year), 
+                    month=(1 if month == 12 else month + 1) 
+                ) }}">
+                次の月
+            </a>
+        </div>
+
+        <table border="1" cellspacing="0" cellpadding="4">
+            <tr>
+                <th>日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th>
+            </tr>
+            {% for week in weeks %}
+                <tr>
+                    {% for day in week %}
+                        <td {% if day.month != month %} style="background:#eee" {% endif %}>
+                            <a href="/day/{{ day.isoformat() }}">
+                                {{ day.day }}
+                            </a>
+                            {% set day_entries = entries_by_date.get(day, []) %}
+                            {% if day_entries %}
+                                <div style="font-size: 0.8em">
+                                    {{ day_entries|length }} 件
+                                </div>
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </table>
+    </body>
+</html>
