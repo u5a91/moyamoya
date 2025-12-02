@@ -27,7 +27,7 @@
                 <tr>
                     {% for day in week %}
                         <td {% if day.month != month %} style="background:#eee" {% endif %}>
-                            <a href="/day/{{ day.isoformat() }}">
+                            <a href=" {{ url_for('day_view', date_str=day.isoformat()) }} ">
                                 {{ day.day }}
                             </a>
                             {% set day_entries = entries_by_date.get(day, []) %}

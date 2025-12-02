@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <h1>{{ target_date.year }} 年 {{ target_date.month }} 月 {{ target_date.day }} 日</h1>
+        {% if day_entries %}
+            <ul>
+                {% for entry in day_entries %}
+                    <li>{{ entry }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>この日のエントリはまだありません. </p>
+        {% endif %}
+        <p>
+            <a href="{{ url_for('calendar_view', 
+                    year=target_date.year,
+                    month=target_date.month 
+                ) }}">
+                カレンダーへ戻る
+            </a>
+        </p>
+    </body>
+</html>
