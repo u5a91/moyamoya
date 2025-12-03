@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
 
-from datetime import datetime, timezone
+import calendar 
+from datetime import datetime, date, timedelta, timezone
 
 from flask import Flask, render_template, redirect, url_for, request, flash, abort
 from flask_sqlalchemy import SQLAlchemy
@@ -50,6 +51,8 @@ class Entry(db.Model):
     # User テーブルとの紐づけ
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
+JST = timezone(timedelta(hours=9))
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -91,6 +94,114 @@ def register():
         flash("登録完了しました. ログインしてください. ")
         return redirect(url_for("login"))
     return render_template("register.html")
+
+@app.route("/calendar")
+@login_required
+def calendar_view():
+    year = request.args.get("year", type=int)
+    month = request.args.get("month", type=int)
+
+    if not year or not month:
+        today = date.today()
+        year, month = today.year, today.month
+
+    cal = calendar.Calendar(firstweekday=6) # 6: Sunday
+    weeks = cal.monthdatescalendar(year, month)
+
+    # 月の範囲指定
+    start_jst = datetime(year, month, 1, 0, 0, tzinfo=JST)
+    if month == 12:
+        end_jst = datetime(year + 1, 1, 1, 0, 0, tzinfo=JST)
+    else:
+        end_jst = datetime(year, month + 1, 1, 0, 0, tzinfo=JST)
+
+    # created_at は datetime 型 なので, 時間情報を付けて比較する必要がある
+    start_dt = start_jst.astimezone(timezone.utc)
+    end_dt = end_jst.astimezone(timezone.utc)
+
+    month_entries = (
+        Entry.query.filter(
+            Entry.user_id == current_user.id,
+            Entry.created_at >= start_dt,
+            Entry.created_at < end_dt
+        )
+        .all()
+    )
+
+    # 日付でまとめる
+    entries_by_date: dict[date, list[Entry]] = {}
+    for e in month_entries:
+        # 保存されている datetime 型を date 型へ変換
+        d = e.created_at.astimezone(JST).date()
+        entries_by_date.setdefault(d, []).append(e)
+
+    return render_template(
+        "calendar_ui.html",
+        year=year,
+        month=month,
+        weeks=weeks,
+        entries_by_date=entries_by_date
+    )
+
+@app.route("/day/<date_str>")
+@login_required
+def day_view(date_str: str):
+    try:
+        target_date = date.fromisoformat(date_str)
+    except ValueError:
+        abort(404)
+
+    start_jst = datetime.combine(target_date, datetime.min.time(), tzinfo=JST)
+    end_jst   = start_jst + timedelta(days=1)
+
+    start_dt = start_jst.astimezone(timezone.utc)
+    end_dt   = end_jst.astimezone(timezone.utc)
+
+    day_entries = (
+        Entry.query.filter(
+            Entry.user_id == current_user.id,
+            Entry.created_at >= start_dt,
+            Entry.created_at < end_dt
+        )
+        .order_by(Entry.created_at.asc())
+        .all()
+    )
+
+    return render_template(
+        "day_view.html",
+        target_date=target_date,
+        day_entries=day_entries,
+    )
+
+@app.route("/day/<date_str>/entry/<int:entry_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_entry(date_str: str, entry_id: int):
+    try:
+        target_date = date.fromisoformat(date_str)
+    except ValueError:
+        abort(404)
+
+    entry = Entry.query.get_or_404(entry_id)
+
+    if entry.user_id != current_user.id:
+        abort(403)
+
+    if entry.created_at.astimezone(JST).date() != target_date:
+        abort(404)
+
+    if request.method == "POST":
+        entry.title = request.form["title"]
+        entry.body = request.form["body"]
+        db.session.commit()
+        flash("エントリを更新しました. ")
+        return redirect(url_for("day_view", date_str=date_str))
+
+    return render_template(
+        "edit_entry.html",
+        target_date=target_date,
+        entry=entry,
+    )
+
 
 @app.route("/logout")
 @login_required
