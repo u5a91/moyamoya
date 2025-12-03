@@ -5,14 +5,22 @@
         {% if day_entries %}
             <ul>
                 {% for entry in day_entries %}
-                    <li>{{ entry }}</li>
+                    <li>
+                        <a href="{{ url_for(
+                            'edit_entry',
+                            date_str=target_date.isoformat(),
+                            entry_id=entry.id
+                        )}}">
+                        {{ entry.title or "無題" }}
+                    </a>
+                    </li>
                 {% endfor %}
             </ul>
         {% else %}
             <p>この日のエントリはまだありません. </p>
         {% endif %}
         <p>
-            <a href="{{ url_for('calendar_view', 
+            <a href="{{ url_for('index', 
                     year=target_date.year,
                     month=target_date.month 
                 ) }}">

@@ -27,14 +27,30 @@
                 <tr>
                     {% for day in week %}
                         <td {% if day.month != month %} style="background:#eee" {% endif %}>
-                            <a href=" {{ url_for('day_view', date_str=day.isoformat()) }} ">
-                                {{ day.day }}
-                            </a>
+                            <div>
+                                <a href="{{ url_for('day_view', date_str=day.isoformat()) }}">
+                                    {{ day.day }}
+                                </a>
+                            </div>
                             {% set day_entries = entries_by_date.get(day, []) %}
                             {% if day_entries %}
                                 <div style="font-size: 0.8em">
                                     {{ day_entries|length }} 件
                                 </div>
+                            <!-- 各エントリへのリンク -->
+                            <div style="font-size: 0.7em; margin-top: 2px;">
+                                {% for entry in day_entries %}
+                                    <div>
+                                        <a href="{{ url_for(
+                                                    'edit_entry',
+                                                    date_str=day.isoformat(),
+                                                    entry_id=entry.id
+                                                ) }}">
+                                            {{ entry.title or "無題" }}
+                                        </a>
+                                    </div>
+                                {% endfor %}
+                            </div>
                             {% endif %}
                         </td>
                     {% endfor %}

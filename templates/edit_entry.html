@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <h1>{{ target_date.isoformat() }} のエントリ編集</h1>
+        <form method="post">
+            <div>
+                <label>タイトル</label><br>
+                <input type="text" name="title" value="{{ entry.title or '' }}" style="width: 400px;">
+            </div>
+            <div style="margin-top: 8px;">
+                <label>本文</label><br>
+                <textarea name="body" rows="15" cols="80">{{ entry.body }}</textarea>
+            </div>
+            <div style="margin-top: 8px;">
+                <button type="submit">保存</button>
+            </div>
+        </form>
+        <p style="margin-top: 8px;">
+            <a href ="{{ url_for('day_view', date_str=target_date.isoformat()) }}">
+                この日のエントリ一覧に戻る
+            </a>
+            <a href="{{ url_for('index',
+                          year=target_date.year,
+                          month=target_date.month) }}">
+                カレンダーに戻る
+            </a>
+        </p>
+    </body>
+</html>

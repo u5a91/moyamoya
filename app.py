@@ -45,13 +45,11 @@ class Entry(db.Model):
     body = db.Column(db.Text, nullable=False)
     created_at = db.Column(
         db.DateTime,
-        default=lambda: datetime.now(timezone.utc)
+        default=datetime.now
     )
 
     # User テーブルとの紐づけ
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-
-JST = timezone(timedelta(hours=9))
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -60,9 +58,46 @@ def load_user(user_id):
 @app.route("/")
 @login_required
 def index():
-    entries = Entry.query.filter_by(user_id=current_user.id).order_by(Entry.created_at.desc()).all() 
-    # ??
-    return render_template("index.html", entries=entries)
+    year = request.args.get("year", type=int)
+    month = request.args.get("month", type=int)
+
+    if not year or not month:
+        today = date.today()
+        year, month = today.year, today.month
+
+    cal = calendar.Calendar(firstweekday=6) # 6: Sunday
+    weeks = cal.monthdatescalendar(year, month)
+
+    # 月の範囲指定
+    start_dt = datetime(year, month, 1, 0, 0)
+    if month == 12:
+        end_dt = datetime(year + 1, 1, 1, 0, 0)
+    else:
+        end_dt = datetime(year, month + 1, 1, 0, 0)
+
+    month_entries = (
+        Entry.query.filter(
+            Entry.user_id == current_user.id,
+            Entry.created_at >= start_dt,
+            Entry.created_at < end_dt
+        )
+        .all()
+    )
+
+    # 日付でまとめる
+    entries_by_date: dict[date, list[Entry]] = {}
+    for e in month_entries:
+        # 保存されている datetime 型を date 型へ変換
+        d = e.created_at.date()
+        entries_by_date.setdefault(d, []).append(e)
+
+    return render_template(
+        "index.html",
+        year=year,
+        month=month,
+        weeks=weeks,
+        entries_by_date=entries_by_date
+    )
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -95,54 +130,6 @@ def register():
         return redirect(url_for("login"))
     return render_template("register.html")
 
-@app.route("/calendar")
-@login_required
-def calendar_view():
-    year = request.args.get("year", type=int)
-    month = request.args.get("month", type=int)
-
-    if not year or not month:
-        today = date.today()
-        year, month = today.year, today.month
-
-    cal = calendar.Calendar(firstweekday=6) # 6: Sunday
-    weeks = cal.monthdatescalendar(year, month)
-
-    # 月の範囲指定
-    start_jst = datetime(year, month, 1, 0, 0, tzinfo=JST)
-    if month == 12:
-        end_jst = datetime(year + 1, 1, 1, 0, 0, tzinfo=JST)
-    else:
-        end_jst = datetime(year, month + 1, 1, 0, 0, tzinfo=JST)
-
-    # created_at は datetime 型 なので, 時間情報を付けて比較する必要がある
-    start_dt = start_jst.astimezone(timezone.utc)
-    end_dt = end_jst.astimezone(timezone.utc)
-
-    month_entries = (
-        Entry.query.filter(
-            Entry.user_id == current_user.id,
-            Entry.created_at >= start_dt,
-            Entry.created_at < end_dt
-        )
-        .all()
-    )
-
-    # 日付でまとめる
-    entries_by_date: dict[date, list[Entry]] = {}
-    for e in month_entries:
-        # 保存されている datetime 型を date 型へ変換
-        d = e.created_at.astimezone(JST).date()
-        entries_by_date.setdefault(d, []).append(e)
-
-    return render_template(
-        "calendar_ui.html",
-        year=year,
-        month=month,
-        weeks=weeks,
-        entries_by_date=entries_by_date
-    )
-
 @app.route("/day/<date_str>")
 @login_required
 def day_view(date_str: str):
@@ -151,11 +138,8 @@ def day_view(date_str: str):
     except ValueError:
         abort(404)
 
-    start_jst = datetime.combine(target_date, datetime.min.time(), tzinfo=JST)
-    end_jst   = start_jst + timedelta(days=1)
-
-    start_dt = start_jst.astimezone(timezone.utc)
-    end_dt   = end_jst.astimezone(timezone.utc)
+    start_dt = datetime.combine(target_date, datetime.min.time())
+    end_dt   = start_dt + timedelta(days=1)
 
     day_entries = (
         Entry.query.filter(
@@ -186,7 +170,7 @@ def edit_entry(date_str: str, entry_id: int):
     if entry.user_id != current_user.id:
         abort(403)
 
-    if entry.created_at.astimezone(JST).date() != target_date:
+    if entry.created_at.date() != target_date:
         abort(404)
 
     if request.method == "POST":
