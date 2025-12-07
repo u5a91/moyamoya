@@ -8,6 +8,9 @@
         <button type="submit">ログイン</button>
     </form>
     <a href="{{ url_for('register') }}">新規登録</a>
+{% endblock %}
+
+{% block scripts %}
     <script>
         {% with messages = get_flashed_messages() %}
             {% if messages %}

@@ -177,7 +177,6 @@ def edit_entry(date_str: str, entry_id: int):
         entry.title = request.form["title"]
         entry.body = request.form["body"]
         db.session.commit()
-        flash("エントリを更新しました. ")
         return redirect(url_for("day_view", date_str=date_str))
 
     return render_template(
