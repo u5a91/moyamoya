@@ -2,20 +2,20 @@
 <html>
     <body>
         <h1>ログイン</h1>
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div style ="color: red; margin-bottom: 10px;">
-                    {% for message in messages %}
-                        {{ message }}
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
         <form method="post">
             <input name="username" placeholder="ユーザ名">
             <input name="password" type="password" placeholder="パスワード">
             <button type="submit">ログイン</button>
         </form>
         <a href="{{ url_for('register') }}">新規登録</a>
+        <script>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                    alert({{ message|tojson }});
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </script>
     </body>
 </html>
