@@ -1,12 +1,14 @@
-<!doctype html>
-<html>
-    <body>
-        <h1>新規登録</h1>
-        <form method="post">
-            <input name="username" placeholder="ユーザ名">
-            <input name="password" type="password" placeholder="パスワード">
-            <button type="submit">登録</button>
-        </form>
-        <a href="{{ url_for('login') }}">ログイン画面へ</a>
-    </body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}新規登録{% endblock %}
+
+{% block content %}
+    <h1>新規登録</h1>
+    <form method="post">
+        <input name="username" placeholder="ユーザ名">
+        <input name="password" type="password" placeholder="パスワード">
+        <button type="submit">登録</button>
+    </form>
+    <a href="{{ url_for('login') }}">ログイン画面へ</a>
+{% endblock %}
+

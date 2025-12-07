@@ -1,66 +1,67 @@
-<!DOCTYPE html>
-<html>
-    <body>
-        <h1>{{ year }} 年 {{ month }} 月 カレンダー</h1>
-        <p>
-            <a href="{{ url_for('new_entry') }}">新しい日記を書く</a>
-            <a href="{{ url_for('logout') }}">ログアウト</a>
-        </p>
+{% extends "base.html" %}
 
-        <div>
-            <a href ="{{ url_for(
-                    'index',
-                    year=(year - 1 if month == 1 else year), 
-                    month=(12 if month == 1 else month - 1) 
-                ) }}">
-                前の月
-            </a>
-            <a href ="{{ url_for(
-                    'index',
-                    year=(year + 1 if month == 12 else year), 
-                    month=(1 if month == 12 else month + 1) 
-                ) }}">
-                次の月
-            </a>
-        </div>
+{% block title %}{{ year }} 年 {{ month }} 月 カレンダー{% endblock %}
 
-        <table border="1" cellspacing="0" cellpadding="4">
+{% block content %}
+    <h1>{{ year }} 年 {{ month }} 月 カレンダー</h1>
+    <p>
+        <a href="{{ url_for('new_entry') }}">新しい日記を書く</a>
+        <a href="{{ url_for('logout') }}">ログアウト</a>
+    </p>
+
+    <div>
+        <a href ="{{ url_for(
+                'index',
+                year=(year - 1 if month == 1 else year), 
+                month=(12 if month == 1 else month - 1) 
+            ) }}">
+            前の月
+        </a>
+        <a href ="{{ url_for(
+                'index',
+                year=(year + 1 if month == 12 else year), 
+                month=(1 if month == 12 else month + 1) 
+            ) }}">
+            次の月
+        </a>
+    </div>
+
+    <table border="1" cellspacing="0" cellpadding="4">
+        <tr>
+            <th>日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th>
+        </tr>
+        {% for week in weeks %}
             <tr>
-                <th>日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th>
-            </tr>
-            {% for week in weeks %}
-                <tr>
-                    {% for day in week %}
-                        <td {% if day.month != month %} style="background:#eee" {% endif %}>
-                            <div>
-                                <a href="{{ url_for('day_view', date_str=day.isoformat()) }}">
-                                    {{ day.day }}
-                                </a>
+                {% for day in week %}
+                    <td {% if day.month != month %} style="background:#eee" {% endif %}>
+                        <div>
+                            <a href="{{ url_for('day_view', date_str=day.isoformat()) }}">
+                                {{ day.day }}
+                            </a>
+                        </div>
+                        {% set day_entries = entries_by_date.get(day, []) %}
+                        {% if day_entries %}
+                            <div style="font-size: 0.8em">
+                                {{ day_entries|length }} 件
                             </div>
-                            {% set day_entries = entries_by_date.get(day, []) %}
-                            {% if day_entries %}
-                                <div style="font-size: 0.8em">
-                                    {{ day_entries|length }} 件
+                        <!-- 各エントリへのリンク -->
+                        <div style="font-size: 0.7em; margin-top: 2px;">
+                            {% for entry in day_entries %}
+                                <div>
+                                    <a href="{{ url_for(
+                                                'edit_entry',
+                                                date_str=day.isoformat(),
+                                                entry_id=entry.id
+                                            ) }}">
+                                        {{ entry.title or "無題" }}
+                                    </a>
                                 </div>
-                            <!-- 各エントリへのリンク -->
-                            <div style="font-size: 0.7em; margin-top: 2px;">
-                                {% for entry in day_entries %}
-                                    <div>
-                                        <a href="{{ url_for(
-                                                    'edit_entry',
-                                                    date_str=day.isoformat(),
-                                                    entry_id=entry.id
-                                                ) }}">
-                                            {{ entry.title or "無題" }}
-                                        </a>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                        </td>
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-        </table>
-    </body>
-</html>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
