@@ -9,7 +9,7 @@
         <a href="{{ url_for('logout') }}">ログアウト</a>
     </p>
 
-    <div>
+    <div class="month-nav">
         <a href ="{{ url_for(
                 'index',
                 year=(year - 1 if month == 1 else year), 
@@ -17,6 +17,7 @@
             ) }}">
             前の月
         </a>
+        |    
         <a href ="{{ url_for(
                 'index',
                 year=(year + 1 if month == 12 else year), 
@@ -26,7 +27,7 @@
         </a>
     </div>
 
-    <table border="1" cellspacing="0" cellpadding="4">
+    <table class="calendar">
         <tr>
             <th>日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th>
         </tr>
@@ -34,7 +35,7 @@
             <tr>
                 {% for day in week %}
                     <td {% if day.month != month %} style="background:#eee" {% endif %}>
-                        <div>
+                        <div class="calendar-date">
                             <a href="{{ url_for('day_view', date_str=day.isoformat()) }}">
                                 {{ day.day }}
                             </a>

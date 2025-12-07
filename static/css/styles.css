@@ -1,6 +1,6 @@
 body {
     font-family: sans-serif;
-    background: #fafafa;
+    background: #9bd4ff;
     margin: 0;
     padding: 0;
 }
@@ -10,4 +10,39 @@ body {
     margin: 0 auto;
     padding: 20px;
     background: white;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+/* calendar */
+
+.calendar {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.calendar th {
+    height: 25px;            /*← よしなみに調整 */
+    background-color: rgb(83, 83, 125);  /* 紺色 */
+    color: white;            /* 見やすく白文字 */
+    font-weight: bold;
+    text-align: center;
+}
+
+.calendar td {
+    border: 1px solid #444;
+    width: calc(100% / 7);
+    height: 100px;
+    vertical-align: top;
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+.month-nav {
+    text-align: center;
+}
+
+.calendar-date a {
+    font-weight: bold;
 }
