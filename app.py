@@ -5,7 +5,7 @@ import calendar
 from datetime import datetime, date, timedelta
 from markdown import markdown
 
-from flask import Flask, render_template, redirect, url_for, request, flash, abort
+from flask import Flask, render_template, redirect, url_for, request, flash, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
     LoginManager, UserMixin, login_user,
@@ -222,6 +222,19 @@ def edit_entry(date_str: str, entry_id: int):
         entry=entry,
     )
 
+# Markdown のプレビュー
+@app.route("/markdown_preview", methods=["POST"])
+@login_required
+def markdown_preview():
+    data = request.get_json(silent=True) or {}
+    text = data.get("text", "") or ""
+
+    html = markdown(
+        text,
+        extensions=["fenced_code", "tables"]
+    )
+
+    return jsonify({"html": html})
 
 @app.route("/logout")
 @login_required
