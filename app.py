@@ -184,7 +184,15 @@ def entry_view(date_str: str, entry_id: int):
 
     body_html = markdown(
         entry.body,
-        extensions=["fenced_code", "tables"] # 拡張機能: コードブロック, テーブル
+        extensions = [
+            "fenced_code",
+            "tables",
+            "sane_lists",
+            "pymdownx.superfences",
+            "pymdownx.highlight",
+            "pymdownx.tilde",
+            "pymdownx.tasklist"
+        ]
     )
 
     return render_template(
@@ -234,7 +242,15 @@ def markdown_preview():
 
     html = markdown(
         text,
-        extensions=["fenced_code", "tables"]
+        extensions = [
+            "fenced_code",
+            "tables",
+            "sane_lists",
+            "pymdownx.superfences",
+            "pymdownx.highlight",
+            "pymdownx.tilde",
+            "pymdownx.tasklist"
+        ]
     )
 
     return jsonify({"html": html})
