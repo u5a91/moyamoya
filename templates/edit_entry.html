@@ -39,6 +39,15 @@
             カレンダーに戻る
         </a>
     </p>
+    
+    <form method="post"
+    action="{{ url_for('delete_entry', entry_id=entry.id) }}"
+    onsubmit="return confirm('本当に削除しますか?');"
+    style="margin-top: 16px;">
+        <button type="submit" style="color: red;">
+            この日記を削除する
+        </button>
+    </form>
 
     <script>
         // 即時実行関数: 最後に () をつける. スコープ汚染を防ぐための書き方
