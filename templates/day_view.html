@@ -9,7 +9,7 @@
             {% for entry in day_entries %}
                 <li>
                     <a href="{{ url_for(
-                        'edit_entry',
+                        'entry_view',
                         date_str=target_date.isoformat(),
                         entry_id=entry.id
                     )}}">

@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}{{ target_date.isoformat() }} のエントリ編集{% endblock %}
+{% block title %}
+    {{ target_date.isoformat() }} のエントリ編集
+{% endblock %}
 
 {% block content %}
     <h1>{{ target_date.isoformat() }} のエントリ編集</h1>
@@ -27,7 +29,6 @@
         </div>
     </div>
 
-
     <p style="margin-top: 8px;">
         <a href ="{{ url_for('day_view', date_str=target_date.isoformat()) }}">
             この日のエントリ一覧に戻る
@@ -38,6 +39,7 @@
             カレンダーに戻る
         </a>
     </p>
+
     <!-- md パーサ: marked.js -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- XSS 対策: DOMPurify -->

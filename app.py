@@ -2,7 +2,8 @@ import os
 from dotenv import load_dotenv
 
 import calendar 
-from datetime import datetime, date, timedelta, timezone
+from datetime import datetime, date, timedelta
+from markdown import markdown
 
 from flask import Flask, render_template, redirect, url_for, request, flash, abort
 from flask_sqlalchemy import SQLAlchemy
@@ -99,6 +100,8 @@ def index():
         entries_by_date=entries_by_date
     )
 
+# ログイン
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -111,6 +114,8 @@ def login():
             return redirect(url_for("index"))
         flash("ユーザ名またはパスワードが違います. ")
     return render_template("login.html")
+
+# 登録
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -129,6 +134,8 @@ def register():
         flash("登録完了しました. ログインしてください. ")
         return redirect(url_for("login"))
     return render_template("register.html")
+
+# 日のエントリ一覧
 
 @app.route("/day/<date_str>")
 @login_required
@@ -155,6 +162,36 @@ def day_view(date_str: str):
         "day_view.html",
         target_date=target_date,
         day_entries=day_entries,
+    )
+
+# エントリ
+
+@app.route("/day/<date_str>/entry/<int:entry_id>/")
+@login_required
+def entry_view(date_str: str, entry_id: int):
+    try: 
+        target_date = date.fromisoformat(date_str)
+    except ValueError:
+        abort(404)
+    
+    entry = Entry.query.get_or_404(entry_id)
+
+    if entry.user_id != current_user.id:
+        abort(403)
+
+    if entry.created_at.date() != target_date:
+        abort(404)
+
+    body_html = markdown(
+        entry.body,
+        extensions=["fenced_code", "tables"] # 拡張機能: コードブロック, テーブル
+    )
+
+    return render_template(
+        "entry_view.html",
+        target_date=target_date,
+        entry=entry,
+        body_html=body_html
     )
 
 @app.route("/day/<date_str>/entry/<int:entry_id>/edit", methods=["GET", "POST"])
@@ -218,6 +255,7 @@ def delete_entry(entry_id):
     db.session.commit()
     flash("削除が完了しました. ")
     return redirect(url_for("index"))
+
 
 if __name__ == "__main__":
     with app.app_context():
