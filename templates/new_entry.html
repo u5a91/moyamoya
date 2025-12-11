@@ -56,6 +56,11 @@
                     // レスポンスのボディを JSON としてパース
                     const data = await resp.json();
                     preview.innerHTML = data.html;
+
+                    // 無事読み込まれたら再描画
+                    if (window.MathJax && window.MathJax.typesetPromise) {
+                        MathJax.typesetPromise([preview]);
+                    }
                 }
                 catch (e) {
                     console.error("preview fetch error", e);

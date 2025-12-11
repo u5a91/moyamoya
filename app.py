@@ -214,7 +214,10 @@ def edit_entry(date_str: str, entry_id: int):
         entry.title = request.form["title"]
         entry.body = request.form["body"]
         db.session.commit()
-        return redirect(url_for("day_view", date_str=date_str))
+
+        # コミット後, 日付取得
+        date_str = entry.created_at.date().isoformat()
+        return redirect(url_for("entry_view", date_str=date_str, entry_id=entry.id))
 
     return render_template(
         "edit_entry.html",
@@ -251,7 +254,10 @@ def new_entry():
         entry = Entry(title=title, body=body, author=current_user)
         db.session.add(entry)
         db.session.commit()
-        return redirect(url_for("index"))
+
+        # コミット後, 日付取得
+        date_str = entry.created_at.date().isoformat()
+        return redirect(url_for("entry_view", date_str=date_str, entry_id=entry.id))
     return render_template("new_entry.html")
 
 # DELETE. form は GET / POST しかサポートしないので POST で代用
