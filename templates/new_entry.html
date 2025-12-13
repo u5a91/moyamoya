@@ -3,20 +3,78 @@
 {% block title %}新しい日記{% endblock %}
 
 {% block content %}
+    <style>
+        .panel {
+            border: 1px solid #ccc;
+            padding: 12px;
+            background: #fafafa;
+            border-radius: 6px;
+        }
+
+        .entry-form {
+            max-width: 900px; 
+        }
+
+        .form-label {
+            display: block;
+            margin-top: 10px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .title-input,
+        .body-textarea {
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 16px;
+            line-height: 1.6;
+            padding: 10px 12px;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            background: #fff;
+        }
+
+        .title-input {
+            font-size: 20px;
+            line-height: 1.4;
+            font-family: inherit;
+        }
+
+        .body-textarea {
+            min-height: 320px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+    </style>
+
     <h1>新しい日記</h1>
-    <form method="post">
-        <input name="title" placeholder="タイトル">
-        <br>
-        <textarea id="body-textarea" name="body" rows="15" cols="80" placeholder="本文"></textarea>
-        <br>
-        <button type="submit">保存</button>
+
+    <form method="post" class="entry-form">
+
+        <div>
+            <label class="form-label" for="title-input">タイトル</label>
+            <input id="title-input" class="title-input" type="text" name="title" placeholder="タイトル">
+        </div>
+        <div>
+            <label class="form-label" for="body-textarea">本文</label>
+            <textarea id="body-textarea" class="body-textarea" name="body" placeholder="本文"></textarea>
+        </div>
+        <div class="actions">
+            <button type="submit">保存</button>
+        </div>
     </form>
 
     <!-- プレビュー表示領域 -->
-    <div style="margin-top: 16px;">
-        <h2>プレビュー</h2>
-        <div id="preview"
-                style="border: 1px solid #ccc; padding: 8px; min-height: 150px; background: #fafafa;">
+    <div style="margin-top: 16px;" class="entry-form">
+        <label class="form-label">プレビュー</label>
+        <div id="preview" class="panel">
         </div>
     </div>
 
