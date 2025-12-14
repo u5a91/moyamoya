@@ -34,16 +34,35 @@
         {% for week in weeks %}
             <tr>
                 {% for day in week %}
-                    <td {% if day.month != month %} style="background:#eee" {% endif %}>
+                    {% set day_entries = entries_by_date.get(day, []) %}
+                    {% set count = day_entries|length %}
+                    {# Jinja2 特有の記法 #}
+                    {% set c = [count, 9]|min %}
+                    {% set t = ((c - 1) // 4 + 1) / 3 %}
+                    
+                    {# 最大色 #}
+                    {% set rmax, gmax, bmax = 0, 80, 255 %}
+
+                    {% set r = (255*(1 - t) + rmax*t)|round|int %}
+                    {% set g = (255*(1 - t) + gmax*t)|round|int %}
+                    {% set b = (255*(1 - t) + bmax*t)|round|int %}
+
+                    {% set bg = "rgb(" ~ r ~ "," ~ g ~ "," ~ b ~ ")" %}
+                        <td
+                            {% if day.month != month %}
+                            style="background:#eee"
+                            {% else %}
+                            style="background: {{ bg }}"
+                            {% endif %}
+                        >
                         <div class="calendar-date">
                             <a href="{{ url_for('day_view', date_str=day.isoformat()) }}">
                                 {{ day.day }}
                             </a>
                         </div>
-                        {% set day_entries = entries_by_date.get(day, []) %}
-                        {% if day_entries %}
+                        {% if count %}
                             <div style="font-size: 0.8em">
-                                {{ day_entries|length }} 件
+                                {{ count }} 件
                             </div>
                         <!-- 各エントリへのリンク -->
                         <div style="font-size: 0.7em; margin-top: 2px;">
