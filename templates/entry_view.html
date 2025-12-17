@@ -6,7 +6,13 @@
 
 {% block content %}
     <h1> {{ entry.title or "エントリ" }} </h1>
-    <p> {{ target_date }} </p>
+
+    <div class="entry-meta">
+        <span>作成日時: {{ entry.created_at.strftime("%Y-%m-%d %H:%M") }} </span>
+        {% if entry.updated_at != entry.created_at %}    
+            <span>最終更新日時: {{ entry.updated_at.strftime("%Y-%m-%d %H:%M") }} </span>
+        {% endif %}
+    </div>
 
     <div class="entry-body">
         {{ body_html|safe }}

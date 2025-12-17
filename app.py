@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import calendar 
 from datetime import datetime, date, timedelta
 from markdown import markdown
+from sqlalchemy.sql import func
 
 from flask import Flask, render_template, redirect, url_for, request, flash, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -11,6 +12,8 @@ from flask_login import (
     LoginManager, UserMixin, login_user,
     logout_user, login_required, current_user
 )
+from flask_migrate import Migrate
+
 from werkzeug.security import generate_password_hash, check_password_hash
 
 load_dotenv()
@@ -21,6 +24,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False # 省エネ
 
 db = SQLAlchemy(app)
+migrate = Migrate()
+migrate.init_app(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = "login" # ログインしていないときのリダイレクト先
 
@@ -44,9 +49,17 @@ class Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200))
     body = db.Column(db.Text, nullable=False)
+
     created_at = db.Column(
         db.DateTime,
-        default=datetime.now
+        server_default=func.now(),
+        nullable=False
+    )
+    updated_at = db.Column(
+        db.DateTime,
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False
     )
 
     # User テーブルとの紐づけ
@@ -293,6 +306,7 @@ def delete_entry(entry_id):
 
 
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
+    # 重要: 以下は初期化のため, はじめの 1 回のみ行う (以降はコメントアウト)
+    # with app.app_context():
+    #    db.create_all()
     app.run(debug=True)
