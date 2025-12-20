@@ -23,6 +23,24 @@ JST = ZoneInfo("Asia/Tokyo")
 def utcnow():
     return datetime.now(timezone.utc)
 
+def to_utc(dt: datetime) -> datetime:
+    """
+    DB からもってきた datetime を zonetime-aware な UTC とする
+    なお SQLite なのでデフォは UTC 想定とする
+    """
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+def to_jst(dt: datetime) -> datetime:
+    """
+    DB からもってきた datetime を zonetime-aware な JST とする
+    """
+    dt_utc = to_utc(dt)
+    return dt_utc.astimezone(JST) if dt_utc else None
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -114,7 +132,7 @@ def index():
     entries_by_date: dict[date, list[Entry]] = {}
     for e in month_entries:
         # 保存されている datetime.datetime 型を datetime.date 型へ変換
-        d = e.created_at.astimezone(JST).date()
+        d = to_jst(e.created_at).date()
         entries_by_date.setdefault(d, []).append(e)
 
     return render_template(
@@ -213,12 +231,12 @@ def entry_view(date_str: str, entry_id: int):
     if entry.updated_at and entry.updated_at.tzinfo is None:
         entry.updated_at = entry.updated_at.replace(tzinfo=timezone.utc)
 
-    entry.created_at = entry.created_at.astimezone(JST)
-    if entry.updated_at:
-        entry.updated_at = entry.updated_at.astimezone(JST)
+    created_jst = to_jst(entry.created_at)
+    updated_jst = to_jst(entry.updated_at) if entry.updated_at else None
 
-    if entry.created_at.date() != target_date:
-        abort(404)
+    correct_date_str = created_jst.date().isoformat()
+    if correct_date_str != date_str:
+        return redirect(url_for("entry_view", date_str=correct_date_str, entry_id=entry.id))
 
     body_html = markdown(
         entry.body,
@@ -232,6 +250,9 @@ def entry_view(date_str: str, entry_id: int):
             "pymdownx.tasklist"
         ]
     )
+
+    entry.created_at = created_jst
+    entry.updated_at = updated_jst
 
     return render_template(
         "entry_view.html",
@@ -256,8 +277,7 @@ def edit_entry(date_str: str, entry_id: int):
     if entry.created_at.tzinfo is None:
         entry.created_at = entry.created_at.replace(tzinfo=timezone.utc)
 
-    created_jst = entry.created_at.astimezone(JST)
-
+    created_jst = to_jst(entry.created_at)
     if created_jst.date() != target_date:
         abort(404)
     
