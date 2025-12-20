@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 import calendar 
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from markdown import markdown
 from sqlalchemy.sql import func
 
@@ -15,6 +15,13 @@ from flask_login import (
 from flask_migrate import Migrate
 
 from werkzeug.security import generate_password_hash, check_password_hash
+
+from zoneinfo import ZoneInfo
+JST = ZoneInfo("Asia/Tokyo")
+
+# UTC の現在時刻を返す
+def utcnow():
+    return datetime.now(timezone.utc)
 
 load_dotenv()
 
@@ -50,16 +57,17 @@ class Entry(db.Model):
     title = db.Column(db.String(200))
     body = db.Column(db.Text, nullable=False)
 
+    # datetime を timezone-aware にして, 関数 utcnow によりデフォルトは UTC を指定
     created_at = db.Column(
-        db.DateTime,
-        server_default=func.now(),
-        nullable=False
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=utcnow,
     )
     updated_at = db.Column(
-        db.DateTime,
-        server_default=func.now(),
-        onupdate=func.now(),
-        nullable=False
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=utcnow,
+        onupdate=utcnow
     )
 
     # User テーブルとの紐づけ
@@ -76,18 +84,22 @@ def index():
     month = request.args.get("month", type=int)
 
     if not year or not month:
-        today = date.today()
+        today = datetime.now(JST).date()
         year, month = today.year, today.month
 
     cal = calendar.Calendar(firstweekday=6) # 6: Sunday
     weeks = cal.monthdatescalendar(year, month)
 
-    # 月の範囲指定
-    start_dt = datetime(year, month, 1, 0, 0)
+    # JST で月の範囲指定
+    start_jst = datetime(year, month, 1, 0, 0, tzinfo=JST)
     if month == 12:
-        end_dt = datetime(year + 1, 1, 1, 0, 0)
+        end_jst = datetime(year + 1, 1, 1, 0, 0, tzinfo=JST)
     else:
-        end_dt = datetime(year, month + 1, 1, 0, 0)
+        end_jst = datetime(year, month + 1, 1, 0, 0, tzinfo=JST)
+
+    # UTC で
+    start_dt = start_jst.astimezone(timezone.utc)
+    end_dt   = end_jst.astimezone(timezone.utc)
 
     month_entries = (
         Entry.query.filter(
@@ -101,8 +113,8 @@ def index():
     # 日付でまとめる
     entries_by_date: dict[date, list[Entry]] = {}
     for e in month_entries:
-        # 保存されている datetime 型を date 型へ変換
-        d = e.created_at.date()
+        # 保存されている datetime.datetime 型を datetime.date 型へ変換
+        d = e.created_at.astimezone(JST).date()
         entries_by_date.setdefault(d, []).append(e)
 
     return render_template(
@@ -158,8 +170,11 @@ def day_view(date_str: str):
     except ValueError:
         abort(404)
 
-    start_dt = datetime.combine(target_date, datetime.min.time())
-    end_dt   = start_dt + timedelta(days=1)
+    start_jst = datetime.combine(target_date, datetime.min.time()).replace(tzinfo=JST)
+    end_jst = start_jst + timedelta(days=1)
+
+    start_dt = start_jst.astimezone(timezone.utc)
+    end_dt = end_jst.astimezone(timezone.utc)
 
     day_entries = (
         Entry.query.filter(
@@ -191,6 +206,16 @@ def entry_view(date_str: str, entry_id: int):
 
     if entry.user_id != current_user.id:
         abort(403)
+
+    # 標準時の指定 tzinfo は昔のデータだと存在しないかも
+    if entry.created_at.tzinfo is None:
+        entry.created_at = entry.created_at.replace(tzinfo=timezone.utc)
+    if entry.updated_at and entry.updated_at.tzinfo is None:
+        entry.updated_at = entry.updated_at.replace(tzinfo=timezone.utc)
+
+    entry.created_at = entry.created_at.astimezone(JST)
+    if entry.updated_at:
+        entry.updated_at = entry.updated_at.astimezone(JST)
 
     if entry.created_at.date() != target_date:
         abort(404)
@@ -228,17 +253,21 @@ def edit_entry(date_str: str, entry_id: int):
     if entry.user_id != current_user.id:
         abort(403)
 
-    if entry.created_at.date() != target_date:
-        abort(404)
+    if entry.created_at.tzinfo is None:
+        entry.created_at = entry.created_at.replace(tzinfo=timezone.utc)
 
+    created_jst = entry.created_at.astimezone(JST)
+
+    if created_jst.date() != target_date:
+        abort(404)
+    
     if request.method == "POST":
         entry.title = request.form["title"]
         entry.body = request.form["body"]
         db.session.commit()
 
         # コミット後, 日付取得
-        date_str = entry.created_at.date().isoformat()
-        return redirect(url_for("entry_view", date_str=date_str, entry_id=entry.id))
+        return redirect(url_for("entry_view", date_str=created_jst.date().isoformat(), entry_id=entry.id))
 
     return render_template(
         "edit_entry.html",
@@ -285,7 +314,7 @@ def new_entry():
         db.session.commit()
 
         # コミット後, 日付取得
-        date_str = entry.created_at.date().isoformat()
+        date_str = entry.created_at.astimezone(JST).date().isoformat()
         return redirect(url_for("entry_view", date_str=date_str, entry_id=entry.id))
     return render_template("new_entry.html")
 
