@@ -248,7 +248,16 @@ def entry_view(date_str: str, entry_id: int):
             "pymdownx.highlight",
             "pymdownx.tilde",
             "pymdownx.tasklist"
-        ]
+        ], 
+        # コードブロックまわり
+        extension_configs={
+            "pymdownx.highlight": {
+                "use_pygments": True,
+                "noclasses": False,
+                "css_class": "highlight",
+                "linenums": True
+            }
+        }
     )
 
     entry.created_at = created_jst

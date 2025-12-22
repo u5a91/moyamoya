@@ -46,3 +46,24 @@ body {
 .calendar-date a {
     font-weight: bold;
 }
+
+/* コードブロック */
+
+.highlight {
+    overflow-x: auto; /* 横スクロール有効化 */
+    max-width: 100%;  /* 親要素の幅を超えない */
+}
+
+/* 折り返さない */
+.highlight pre {
+    white-space: pre;    /* 折り返さない */
+    overflow-x: auto;
+    padding: 0.75em 1em; 
+    margin: 0;
+}
+
+/* 横に伸ばす */
+.highlight code {
+    display: block;
+    min-width: max-content;
+}
