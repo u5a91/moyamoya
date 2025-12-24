@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 
+import bleach
 import calendar 
 from datetime import datetime, date, timedelta, timezone
 from markdown import markdown
@@ -40,6 +41,35 @@ def to_jst(dt: datetime) -> datetime:
     """
     dt_utc = to_utc(dt)
     return dt_utc.astimezone(JST) if dt_utc else None
+
+# サニタイジング
+# <img> などはまだ許可していないことに注意
+
+ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS.union({
+    "p","br","pre","code","blockquote",
+    "ul","ol","li",
+    "strong","em","del",
+    "h1","h2","h3","h4",
+    "table","thead","tbody","tr","th","td","a"
+})
+ALLOWED_ATTRS = {
+    "a": ["href", "title", "rel"],
+    "code": ["class"],
+    "span": ["class"],
+    "pre": ["class"]
+}
+ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
+
+def sanitize_html(html: str) -> str:
+    cleaned = bleach.clean(
+        html,
+        tags=list(ALLOWED_TAGS),
+        attributes=ALLOWED_ATTRS,
+        protocols=ALLOWED_PROTOCOLS,
+        strip=True,
+    )
+    cleaned = bleach.linkify(cleaned)
+    return cleaned
 
 load_dotenv()
 
@@ -238,7 +268,7 @@ def entry_view(date_str: str, entry_id: int):
     if correct_date_str != date_str:
         return redirect(url_for("entry_view", date_str=correct_date_str, entry_id=entry.id))
 
-    body_html = markdown(
+    raw_html = markdown(
         entry.body,
         extensions = [
             "fenced_code",
@@ -259,6 +289,7 @@ def entry_view(date_str: str, entry_id: int):
             }
         }
     )
+    body_html = sanitize_html(raw_html)
 
     entry.created_at = created_jst
     entry.updated_at = updated_jst
@@ -311,7 +342,7 @@ def markdown_preview():
     data = request.get_json(silent=True) or {}
     text = data.get("text", "") or ""
 
-    html = markdown(
+    raw_html = markdown(
         text,
         extensions = [
             "fenced_code",
@@ -323,6 +354,7 @@ def markdown_preview():
             "pymdownx.tasklist"
         ]
     )
+    html = sanitize_html(raw_html)
 
     return jsonify({"html": html})
 
