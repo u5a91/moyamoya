@@ -43,7 +43,6 @@ def to_jst(dt: datetime) -> datetime:
     return dt_utc.astimezone(JST) if dt_utc else None
 
 # サニタイジング
-# <img> などはまだ許可していないことに注意
 
 ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS.union({
     "p","br","pre","code","blockquote",
@@ -51,14 +50,15 @@ ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS.union({
     "strong","em","del",
     "h1","h2","h3","h4",
     "table","thead","tbody","tr","th","td","a",
-    "div", "span"
+    "div", "span", "img"
 })
 ALLOWED_ATTRS = {
     "a": ["href", "title", "rel"],
     "code": ["class"],
     "span": ["class"],
     "pre": ["class"],
-    "div": ["class"]
+    "div": ["class"], 
+    "img": ["src", "alt", "title", "width"]
 }
 ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
 

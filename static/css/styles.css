@@ -47,6 +47,14 @@ body {
     font-weight: bold;
 }
 
+/* エントリ */
+
+.entry-body img {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+}
+
 /* コードブロック */
 
 .highlight {
