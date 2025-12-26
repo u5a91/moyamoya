@@ -50,13 +50,15 @@ ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS.union({
     "ul","ol","li",
     "strong","em","del",
     "h1","h2","h3","h4",
-    "table","thead","tbody","tr","th","td","a"
+    "table","thead","tbody","tr","th","td","a",
+    "div", "span"
 })
 ALLOWED_ATTRS = {
     "a": ["href", "title", "rel"],
     "code": ["class"],
     "span": ["class"],
-    "pre": ["class"]
+    "pre": ["class"],
+    "div": ["class"]
 }
 ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
 
