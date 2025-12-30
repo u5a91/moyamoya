@@ -64,18 +64,25 @@
 
     <h1>{{ target_date.isoformat() }} のエントリ編集</h1>
 
-    <form method="post" class="entry-form">
+    <form method="post" class="entry-form" enctype="multipart/form-data">
+
         <div>
             <label class="form-label" for="title-input">タイトル</label>
-            <input id="title-input" class="title-input" type="text" name="title" value="{{ entry.title or '' }}">
+            <input id="title-input" class="title-input" type="text" name="title" placeholder="タイトル">
         </div>
         <div>
             <label class="form-label" for="body-textarea">本文</label>
-            <textarea id="body-textarea" class="body-textarea" name="body">{{ entry.body }}</textarea>
+            <textarea id="body-textarea" class="body-textarea" name="body" placeholder="本文"></textarea>
+        </div>
+        <div style="margin-top: 16px;">
+            <label class="form-label">画像</label>
+            <input id="image-input" type="file" accept="image/*">
+            <button type="button" id="upload-btn">画像をアップロードして挿入</button>
         </div>
         <div class="actions">
             <button type="submit">保存</button>
         </div>
+
     </form>
 
     <!-- プレビュー表示領域 -->
@@ -160,6 +167,48 @@
 
             // 初期表示
             updatePreview();
+        })();
+
+        // 画像アップロード用
+        (function () {
+            const uploadBtn = document.getElementById("upload-btn")
+            const imageInput = document.getElementById("image-input")
+            const textarea = document.getElementById("body-textarea")
+
+            if (!uploadBtn || !imageInput || !textarea) return;
+
+            uploadBtn.addEventListener("click", async () => {
+                if (!imageInput.files.length) {
+                    alert("画像ファイルを選択してください");
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append("image", imageInput.files[0]);
+
+                try {
+                    const res = await fetch("{{ url_for('upload_image')}}", {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) {
+                        alert(data.error || "アップロードに失敗しました");
+                        return;
+                    }
+
+                    const insert = `\n\n<img src="${data.url}" width="500">\n`;
+                    textarea.value += insert;
+
+                    // プレビュー更新
+                    textarea.dispatchEvent(new Event('input'));
+                    imageInput.value = "";
+                } catch(e) {
+                    console.error(e);
+                    alert("通信エラーが発生しました");
+                }
+            })
         })();
     </script>
 {% endblock %}

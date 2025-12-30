@@ -62,7 +62,7 @@
 
     <h1>新しい日記</h1>
 
-    <form method="post" class="entry-form">
+    <form method="post" class="entry-form" enctype="multipart/form-data">
 
         <div>
             <label class="form-label" for="title-input">タイトル</label>
@@ -72,9 +72,15 @@
             <label class="form-label" for="body-textarea">本文</label>
             <textarea id="body-textarea" class="body-textarea" name="body" placeholder="本文"></textarea>
         </div>
+        <div style="margin-top: 16px;">
+            <label class="form-label">画像</label>
+            <input id="image-input" type="file" accept="image/*">
+            <button type="button" id="upload-btn">画像をアップロードして挿入</button>
+        </div>
         <div class="actions">
             <button type="submit">保存</button>
         </div>
+
     </form>
 
     <!-- プレビュー表示領域 -->
@@ -87,7 +93,8 @@
     <a href="{{ url_for('index') }}">戻る</a>
 
     <script>
-         // 即時実行関数: 最後に () をつける. スコープ汚染を防ぐための書き方
+        // Markdown プレビュー
+        // 即時実行関数: 最後に () をつける. スコープ汚染を防ぐための書き方
         (function () {
             const textarea = document.getElementById("body-textarea")
             const preview = document.getElementById("preview")
@@ -144,5 +151,46 @@
             updatePreview();
         })();
 
+        // 画像アップロード用
+        (function () {
+            const uploadBtn = document.getElementById("upload-btn")
+            const imageInput = document.getElementById("image-input")
+            const textarea = document.getElementById("body-textarea")
+
+            if (!uploadBtn || !imageInput || !textarea) return;
+
+            uploadBtn.addEventListener("click", async () => {
+                if (!imageInput.files.length) {
+                    alert("画像ファイルを選択してください");
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append("image", imageInput.files[0]);
+
+                try {
+                    const res = await fetch("{{ url_for('upload_image')}}", {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) {
+                        alert(data.error || "アップロードに失敗しました");
+                        return;
+                    }
+
+                    const insert = `\n\n<img src="${data.url}" width="500">\n`;
+                    textarea.value += insert;
+
+                    // プレビュー更新
+                    textarea.dispatchEvent(new Event('input'));
+                    imageInput.value = "";
+                } catch(e) {
+                    console.error(e);
+                    alert("通信エラーが発生しました");
+                }
+            })
+        })();
     </script>
 {% endblock %}

@@ -16,6 +16,7 @@ from flask_login import (
 from flask_migrate import Migrate
 
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 
 from zoneinfo import ZoneInfo
 JST = ZoneInfo("Asia/Tokyo")
@@ -122,6 +123,20 @@ class Entry(db.Model):
 
     # User テーブルとの紐づけ
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+# 画像保存
+
+ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "static", "uploads")
+app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
+
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
+def allowed_image_file(filename: str) -> bool:
+    if "." not in filename:
+        return False
+    ext = filename.rsplit(".", 1)[1].lower()
+    return ext in ALLOWED_IMAGE_EXTENSIONS
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -396,6 +411,27 @@ def delete_entry(entry_id):
     flash("削除が完了しました. ")
     return redirect(url_for("index"))
 
+# 画像アップロード用エンドポイント作成 API
+@app.route("/upload_image", methods=["POST"])
+@login_required
+def upload_image():
+    file = request.files.get("image")
+
+    if not file or file.filename == "":
+        return jsonify({"error": "ファイルが選択されていません"}), 400
+    if not allowed_image_file(file.filename):
+        return jsonify({"error": "許可されていないファイル形式です"}), 400
+
+    filename = secure_filename(file.filename)
+    name, ext = os.path.splitext(filename)
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    filename = f"{timestamp}_u{current_user.id}_{name}{ext}"
+
+    save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    file.save(save_path)
+
+    url = url_for("static", filename=f"uploads/{filename}", _external=False)
+    return jsonify({"url": url})
 
 if __name__ == "__main__":
     # 重要: 以下は初期化のため, はじめの 1 回のみ行う (以降はコメントアウト)

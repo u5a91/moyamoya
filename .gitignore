@@ -1,4 +1,5 @@
 .env
+static/uploads/
 __pycache__/
 *.pyc
 instance/
