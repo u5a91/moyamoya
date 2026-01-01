@@ -1,3 +1,5 @@
+/* ベース */
+
 body {
     font-family: sans-serif;
     background: #9bd4ff;
@@ -14,7 +16,7 @@ body {
     box-sizing: border-box;
 }
 
-/* calendar */
+/* カレンダー */
 
 .calendar {
     width: 100%;
@@ -23,9 +25,9 @@ body {
 }
 
 .calendar th {
-    height: 25px;            /*← よしなみに調整 */
-    background-color: rgb(83, 83, 125);  /* 紺色 */
-    color: white;            /* 見やすく白文字 */
+    height: 25px; 
+    background-color: rgb(83, 83, 125);
+    color: white;
     font-weight: bold;
     text-align: center;
 }
@@ -62,7 +64,6 @@ body {
     max-width: 100%;  /* 親要素の幅を超えない */
 }
 
-/* 折り返さない */
 .highlight pre {
     white-space: pre;    /* 折り返さない */
     overflow-x: auto;
@@ -70,8 +71,64 @@ body {
     margin: 0;
 }
 
-/* 横に伸ばす */
 .highlight code {
-    display: block;
+    display: block;    /* 横に伸ばす */
     min-width: max-content;
+}
+
+/* エントリのフォーム */
+
+.panel {
+    border: 1px solid #ccc;
+    padding: 12px;
+    background: #fafafa;
+    border-radius: 6px;
+}
+
+.entry-form {
+    max-width: 900px; 
+}
+
+.form-label {
+    display: block;
+    margin-top: 10px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.title-input,
+.body-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 16px;
+    line-height: 1.6;
+    padding: 10px 12px;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.title-input {
+    font-size: 20px;
+    line-height: 1.4;
+    font-family: inherit;
+}
+
+.body-textarea {
+    min-height: 320px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.panel img {
+    display: block;
+    margin: auto;
+    max-width: 100%;
 }
