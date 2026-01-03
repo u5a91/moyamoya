@@ -11,11 +11,12 @@
 
         <div>
             <label class="form-label" for="title-input">タイトル</label>
-            <input id="title-input" class="title-input" type="text" name="title" placeholder="タイトル">
+            <input id="title-input" class="title-input" type="text" name="title" placeholder="タイトル"
+                value="{{ entry.title or '' }}">
         </div>
         <div>
             <label class="form-label" for="body-textarea">本文</label>
-            <textarea id="body-textarea" class="body-textarea" name="body" placeholder="本文"></textarea>
+            <textarea id="body-textarea" class="body-textarea" name="body" placeholder="本文">{{ entry.body }}</textarea>
         </div>
         <div style="margin-top: 16px;">
             <label class="form-label">画像</label>
