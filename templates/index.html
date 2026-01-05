@@ -50,8 +50,8 @@
                     {% set bg = "rgb(" ~ r ~ "," ~ g ~ "," ~ b ~ ")" %}
                         <td
                             {% if day.month != month %}
-                            style="background:#eee"
-                            {% else %}
+                            style="background:#acacac"
+                            {% elif count > 0 %}
                             style="background: {{ bg }}"
                             {% endif %}
                         >

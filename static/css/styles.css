@@ -1,8 +1,15 @@
 /* ベース */
 
+:root{
+  --blue-strong: #002aff;
+  --gray-base: #dddddd;
+  --gray-strong: #7e7e7e;
+}
+
 body {
-    font-family: sans-serif;
-    background: #9bd4ff;
+    font-family: Source Han Serif;
+    background: var(--gray-base);
+    color: var(--blue-strong);
     margin: 0;
     padding: 0;
 }
@@ -11,7 +18,7 @@ body {
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
-    background: white;
+    background: var(--gray-base);
     min-height: 100vh;
     box-sizing: border-box;
 }
@@ -26,7 +33,7 @@ body {
 
 .calendar th {
     height: 25px; 
-    background-color: rgb(83, 83, 125);
+    background-color: var(--blue-strong);
     color: white;
     font-weight: bold;
     text-align: center;
