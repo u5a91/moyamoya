@@ -139,3 +139,9 @@ body {
     margin: auto;
     max-width: 100%;
 }
+
+/* プレビュー文字色 */
+
+#preview {
+    color: #000; /* 黒 */
+}
