@@ -2,16 +2,29 @@ import os
 from dotenv import load_dotenv
 
 import bleach
-import calendar 
+import calendar
 from datetime import datetime, date, timedelta, timezone
 from markdown import markdown
 from sqlalchemy.sql import func
 
-from flask import Flask, render_template, redirect, url_for, request, flash, abort, jsonify
+from flask import (
+    Flask,
+    render_template,
+    redirect,
+    url_for,
+    request,
+    flash,
+    abort,
+    jsonify,
+)
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
-    LoginManager, UserMixin, login_user,
-    logout_user, login_required, current_user
+    LoginManager,
+    UserMixin,
+    login_user,
+    logout_user,
+    login_required,
+    current_user,
 )
 from flask_migrate import Migrate
 
@@ -19,11 +32,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
 from zoneinfo import ZoneInfo
+
 JST = ZoneInfo("Asia/Tokyo")
+
 
 # UTC の現在時刻を返す
 def utcnow():
     return datetime.now(timezone.utc)
+
 
 def to_utc(dt: datetime) -> datetime:
     """
@@ -36,6 +52,7 @@ def to_utc(dt: datetime) -> datetime:
         return dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc)
 
+
 def to_jst(dt: datetime) -> datetime:
     """
     DB からもってきた datetime を zonetime-aware な JST とする
@@ -43,25 +60,48 @@ def to_jst(dt: datetime) -> datetime:
     dt_utc = to_utc(dt)
     return dt_utc.astimezone(JST) if dt_utc else None
 
+
 # サニタイジング
 
-ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS.union({
-    "p","br","pre","code","blockquote",
-    "ul","ol","li",
-    "strong","em","del",
-    "h1","h2","h3","h4",
-    "table","thead","tbody","tr","th","td","a",
-    "div", "span", "img"
-})
+ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS.union(
+    {
+        "p",
+        "br",
+        "pre",
+        "code",
+        "blockquote",
+        "ul",
+        "ol",
+        "li",
+        "strong",
+        "em",
+        "del",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "table",
+        "thead",
+        "tbody",
+        "tr",
+        "th",
+        "td",
+        "a",
+        "div",
+        "span",
+        "img",
+    }
+)
 ALLOWED_ATTRS = {
     "a": ["href", "title", "rel"],
     "code": ["class"],
     "span": ["class"],
     "pre": ["class"],
-    "div": ["class"], 
-    "img": ["src", "alt", "title", "width"]
+    "div": ["class"],
+    "img": ["src", "alt", "title", "width"],
 }
 ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
+
 
 def sanitize_html(html: str) -> str:
     cleaned = bleach.clean(
@@ -74,18 +114,20 @@ def sanitize_html(html: str) -> str:
     cleaned = bleach.linkify(cleaned)
     return cleaned
 
+
 load_dotenv()
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False # 省エネ
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False  # 省エネ
 
 db = SQLAlchemy(app)
 migrate = Migrate()
 migrate.init_app(app, db)
 login_manager = LoginManager(app)
-login_manager.login_view = "login" # ログインしていないときのリダイレクト先
+login_manager.login_view = "login"  # ログインしていないときのリダイレクト先
+
 
 class User(UserMixin, db.Model):
     # UserMixin で Flask-Login に必要な属性を読み込み
@@ -93,7 +135,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
 
-    # User モデルは複数 Entry を持つよ. 逆方向参照. 
+    # User モデルは複数 Entry を持つよ. 逆方向参照.
     # lazy で使うときに読み込むようにするよ
     entries = db.relationship("Entry", backref="author", lazy=True)
 
@@ -102,7 +144,8 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password_hash, password)
-    
+
+
 class Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200))
@@ -115,14 +158,12 @@ class Entry(db.Model):
         default=utcnow,
     )
     updated_at = db.Column(
-        db.DateTime(timezone=True),
-        nullable=False,
-        default=utcnow,
-        onupdate=utcnow
+        db.DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow
     )
 
     # User テーブルとの紐づけ
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
 
 # 画像保存
 
@@ -132,15 +173,18 @@ app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
+
 def allowed_image_file(filename: str) -> bool:
     if "." not in filename:
         return False
     ext = filename.rsplit(".", 1)[1].lower()
     return ext in ALLOWED_IMAGE_EXTENSIONS
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
 
 @app.route("/")
 @login_required
@@ -152,7 +196,7 @@ def index():
         today = datetime.now(JST).date()
         year, month = today.year, today.month
 
-    cal = calendar.Calendar(firstweekday=6) # 6: Sunday
+    cal = calendar.Calendar(firstweekday=6)  # 6: Sunday
     weeks = cal.monthdatescalendar(year, month)
 
     # JST で月の範囲指定
@@ -164,16 +208,13 @@ def index():
 
     # UTC で
     start_dt = start_jst.astimezone(timezone.utc)
-    end_dt   = end_jst.astimezone(timezone.utc)
+    end_dt = end_jst.astimezone(timezone.utc)
 
-    month_entries = (
-        Entry.query.filter(
-            Entry.user_id == current_user.id,
-            Entry.created_at >= start_dt,
-            Entry.created_at < end_dt
-        )
-        .all()
-    )
+    month_entries = Entry.query.filter(
+        Entry.user_id == current_user.id,
+        Entry.created_at >= start_dt,
+        Entry.created_at < end_dt,
+    ).all()
 
     # 日付でまとめる
     entries_by_date: dict[date, list[Entry]] = {}
@@ -187,10 +228,12 @@ def index():
         year=year,
         month=month,
         weeks=weeks,
-        entries_by_date=entries_by_date
+        entries_by_date=entries_by_date,
     )
 
+
 # ログイン
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -205,7 +248,9 @@ def login():
         flash("ユーザ名またはパスワードが違います. ")
     return render_template("login.html")
 
+
 # 登録
+
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -225,7 +270,9 @@ def register():
         return redirect(url_for("login"))
     return render_template("register.html")
 
+
 # 日のエントリ一覧
+
 
 @app.route("/day/<date_str>")
 @login_required
@@ -245,7 +292,7 @@ def day_view(date_str: str):
         Entry.query.filter(
             Entry.user_id == current_user.id,
             Entry.created_at >= start_dt,
-            Entry.created_at < end_dt
+            Entry.created_at < end_dt,
         )
         .order_by(Entry.created_at.asc())
         .all()
@@ -257,16 +304,18 @@ def day_view(date_str: str):
         day_entries=day_entries,
     )
 
+
 # エントリ
+
 
 @app.route("/day/<date_str>/entry/<int:entry_id>/")
 @login_required
 def entry_view(date_str: str, entry_id: int):
-    try: 
+    try:
         target_date = date.fromisoformat(date_str)
     except ValueError:
         abort(404)
-    
+
     entry = Entry.query.get_or_404(entry_id)
 
     if entry.user_id != current_user.id:
@@ -283,28 +332,30 @@ def entry_view(date_str: str, entry_id: int):
 
     correct_date_str = created_jst.date().isoformat()
     if correct_date_str != date_str:
-        return redirect(url_for("entry_view", date_str=correct_date_str, entry_id=entry.id))
+        return redirect(
+            url_for("entry_view", date_str=correct_date_str, entry_id=entry.id)
+        )
 
     raw_html = markdown(
         entry.body,
-        extensions = [
+        extensions=[
             "fenced_code",
             "tables",
             "sane_lists",
             "pymdownx.superfences",
             "pymdownx.highlight",
             "pymdownx.tilde",
-            "pymdownx.tasklist"
-        ], 
+            "pymdownx.tasklist",
+        ],
         # コードブロックまわり
         extension_configs={
             "pymdownx.highlight": {
                 "use_pygments": True,
                 "noclasses": False,
                 "css_class": "highlight",
-                "linenums": True
+                "linenums": True,
             }
-        }
+        },
     )
     body_html = sanitize_html(raw_html)
 
@@ -312,11 +363,9 @@ def entry_view(date_str: str, entry_id: int):
     entry.updated_at = updated_jst
 
     return render_template(
-        "entry_view.html",
-        target_date=target_date,
-        entry=entry,
-        body_html=body_html
+        "entry_view.html", target_date=target_date, entry=entry, body_html=body_html
     )
+
 
 @app.route("/day/<date_str>/entry/<int:entry_id>/edit", methods=["GET", "POST"])
 @login_required
@@ -337,20 +386,25 @@ def edit_entry(date_str: str, entry_id: int):
     created_jst = to_jst(entry.created_at)
     if created_jst.date() != target_date:
         abort(404)
-    
+
     if request.method == "POST":
         entry.title = request.form["title"]
         entry.body = request.form["body"]
         db.session.commit()
 
         # コミット後, 日付取得
-        return redirect(url_for("entry_view", date_str=created_jst.date().isoformat(), entry_id=entry.id))
+        return redirect(
+            url_for(
+                "entry_view", date_str=created_jst.date().isoformat(), entry_id=entry.id
+            )
+        )
 
     return render_template(
         "edit_entry.html",
         target_date=target_date,
         entry=entry,
     )
+
 
 # Markdown のプレビュー
 @app.route("/markdown_preview", methods=["POST"])
@@ -361,25 +415,27 @@ def markdown_preview():
 
     raw_html = markdown(
         text,
-        extensions = [
+        extensions=[
             "fenced_code",
             "tables",
             "sane_lists",
             "pymdownx.superfences",
             "pymdownx.highlight",
             "pymdownx.tilde",
-            "pymdownx.tasklist"
-        ]
+            "pymdownx.tasklist",
+        ],
     )
     html = sanitize_html(raw_html)
 
     return jsonify({"html": html})
+
 
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
     return redirect(url_for("login"))
+
 
 @app.route("/new", methods=["GET", "POST"])
 @login_required
@@ -396,13 +452,14 @@ def new_entry():
         return redirect(url_for("entry_view", date_str=date_str, entry_id=entry.id))
     return render_template("new_entry.html")
 
+
 # DELETE. form は GET / POST しかサポートしないので POST で代用
 @app.route("/delete/<int:entry_id>", methods=["POST"])
 @login_required
 def delete_entry(entry_id):
     # None ならば 404
     entry = Entry.query.get_or_404(entry_id)
-    
+
     if entry.user_id != current_user.id:
         abort(403)
 
@@ -410,6 +467,7 @@ def delete_entry(entry_id):
     db.session.commit()
     flash("削除が完了しました. ")
     return redirect(url_for("index"))
+
 
 # 画像アップロード用エンドポイント作成 API
 @app.route("/upload_image", methods=["POST"])
@@ -432,6 +490,7 @@ def upload_image():
 
     url = url_for("static", filename=f"uploads/{filename}", _external=False)
     return jsonify({"url": url})
+
 
 if __name__ == "__main__":
     # 重要: 以下は初期化のため, はじめの 1 回のみ行う (以降はコメントアウト)
