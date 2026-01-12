@@ -1,9 +1,9 @@
 /* ベース */
 
 :root{
-  --blue-strong: #002aff;
-  --gray-base: #dddddd;
-  --gray-strong: #7e7e7e;
+    --blue-strong: #002aff;
+    --gray-base: #dddddd;
+    --gray-strong: #464646;
 }
 
 body {
@@ -144,4 +144,10 @@ body {
 
 #preview {
     color: #000; /* 黒 */
+}
+
+/* day_view 抜粋文字色 */
+
+.excerpt {
+    color: var(--gray-strong);
 }

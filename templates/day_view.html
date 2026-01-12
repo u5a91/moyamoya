@@ -8,13 +8,16 @@
         <ul>
             {% for entry in day_entries %}
                 <li>
-                    <a href="{{ url_for(
+                    <a class="entry-title" href="{{ url_for(
                         'entry_view',
                         date_str=target_date.isoformat(),
                         entry_id=entry.id
                     )}}">
-                    {{ entry.title or "無題" }}
-                </a>
+                        <strong>{{ entry.title or "無題" }}</strong>
+                    </a>
+                    <div class="excerpt">
+                        {{ entry.body | truncate(80, True, '…') }}
+                    </div>
                 </li>
             {% endfor %}
         </ul>
