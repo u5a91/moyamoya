@@ -23,9 +23,11 @@
                         <a href="{{ url_for('entry_view',
                                             date_str=entry.created_at.date().isoformat(),
                                             entry_id=entry.id) }}">
-                            {{ entry.title or "無題" }}
+                            <strong>{{ entry.title or "無題" }}</strong>
                         </a>
-                        <small>{{ entry.date }}</small>
+                        <div class="excerpt">
+                            {{ entry.body | truncate(80, True, '…') }}
+                        </div>
                     </li>
                 {% endfor %}
             </ul>
