@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}検索{% endblock %}
+
+{% block content %}
+    <h1>全文検索</h1>
+    <p>
+        <a href="{{ url_for('index') }}">今月のカレンダー</a>
+        <a href="{{ url_for('new_entry') }}">新しい日記を書く</a>
+        <a href="{{ url_for('logout') }}">ログアウト</a>
+    </p>
+
+    <form method="get" action="{{ url_for('search') }}">
+        <input type="text" name="q" value="{{ q }}">
+        <button type="submit">検索</button>
+    </form>
+
+    {% if q %}
+        {% if results %}
+            <ul>
+                {% for entry in results %}
+                    <li>
+                        <a href="{{ url_for('entry_view',
+                                            date_str=entry.created_at.date().isoformat(),
+                                            entry_id=entry.id) }}">
+                            {{ entry.title or "無題" }}
+                        </a>
+                        <small>{{ entry.date }}</small>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>該当する日記はありません. </p>
+        {% endif %}
+    {% endif %}
+{% endblock %}

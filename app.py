@@ -453,6 +453,34 @@ def new_entry():
     return render_template("new_entry.html")
 
 
+# 全文検索用ページ
+
+
+@app.route("/search")
+@login_required
+def search():
+    q = request.args.get("q", "").strip()
+    
+    results = []
+    if q:
+        results = (
+            Entry.query
+            .filter(Entry.user_id == current_user.id)
+            .filter(
+                (Entry.title.contains(q)) |
+                (Entry.body.contains(q))
+            )
+            .order_by(Entry.created_at.desc())
+            .all()
+        )
+
+    return render_template(
+        "search.html",
+        q=q,
+        results=results
+    )
+
+    
 # DELETE. form は GET / POST しかサポートしないので POST で代用
 @app.route("/delete/<int:entry_id>", methods=["POST"])
 @login_required
