@@ -150,6 +150,8 @@ class Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200))
     body = db.Column(db.Text, nullable=False)
+    
+    entry_date = db.Column(db.Date, nullable=False)
 
     # datetime を timezone-aware にして, 関数 utcnow によりデフォルトは UTC を指定
     created_at = db.Column(
